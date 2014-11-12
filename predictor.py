@@ -3,7 +3,7 @@ import re, urllib
 from urllib import urlopen
 
 
-def getTeams():    
+def getTeams():   #returns team codes for all 30 teams 
     url = 'http://www.basketball-reference.com/leagues/NBA_2015_standings.html'
     f = urllib.urlopen(url)
     words = f.read().decode('utf-8')
@@ -15,7 +15,7 @@ def getTeams():
     return adj_team_links
 
     
-def getRatings(team_links):     
+def getRatings(team_links):   #scrapes offensive, defensive ratings for each team  
     base_url = 'http://www.basketball-reference.com/teams/'
     end_url = '/2015.html'
     all_oRtg = {}
@@ -24,7 +24,7 @@ def getRatings(team_links):
         full_url = base_url + i + end_url
         f = urllib.urlopen(full_url)
         words = f.read().decode('utf-8')
-        rating_arr = re.findall('Off Rtg</span></a>: (.+) \(', words)
+        rating_arr = re.findall('Off Rtg</span></a>: (.+) \(', words) #this scrapes a lot, must be cleaned
         oRtg = ''
         back_dRtg = ''
         dRtg = ''
@@ -36,7 +36,7 @@ def getRatings(team_links):
             j = j+1   
         j = 1
         while rating_info[len(rating_info)-j] in good_chars:
-            back_dRtg += rating_info[len(rating_info)-j] #working backwards
+            back_dRtg += rating_info[len(rating_info)-j] #working backwards, getting defensive rating
             j = j+1
         for k in range(0,len(back_dRtg)): #flipping the backwards value to normal
             dRtg += back_dRtg[len(back_dRtg)-k-1]  
@@ -45,7 +45,7 @@ def getRatings(team_links):
     return all_oRtg, all_dRtg  
 
     
-def getSchedule(team_links):
+def getSchedule(team_links): #returns schedules for each team
     base_url = 'http://www.basketball-reference.com/teams/'
     end_url = '/2015_games.html'
     all_schedules = {}
@@ -64,7 +64,7 @@ def getSchedule(team_links):
     return all_schedules                           
     
 
-def findAvg(schedule, off_, def_):
+def findAvg(schedule, off_, def_): #gets league averages of efficiency
     sum_off = 0
     sum_def = 0
     games = 0
@@ -81,7 +81,7 @@ def findAvg(schedule, off_, def_):
     return sum_off, sum_def    
         
         
-def adjustRtg(off_, def_, oAvg, dAvg):
+def adjustRtg(off_, def_, oAvg, dAvg): #adjusts teams' efficiencies compared to league average
     adjO = {}
     adjD = {}
     for key in off_:
@@ -89,7 +89,7 @@ def adjustRtg(off_, def_, oAvg, dAvg):
         adjD[key] = float(def_[key]) - dAvg        
     return adjO, adjD
     
-def perfectRtg(schedule, adjO, adjD):
+def perfectRtg(schedule, adjO, adjD): #Modifies teams' ratings based off ratings of opponents
     newO = adjO
     newD = adjD
     for n in range(0, 100000):    
@@ -113,7 +113,7 @@ def perfectRtg(schedule, adjO, adjD):
     return newO, newD          
         
 
-def rateTeams(off_, def_):
+def rateTeams(off_, def_): #this method not currently in use
     teamNames = []
     spreadValues = []
     for key in off_:
@@ -134,7 +134,7 @@ def rateTeams(off_, def_):
         print teamNames[n], spreadValues[n]                           
 
 
-def readjustRtg(off_, def_, oAvg, dAvg):
+def readjustRtg(off_, def_, oAvg, dAvg): #Converts ratings from +/- to actual numbers
     finalO = {}
     finalD = {}
     for key in off_:
@@ -143,7 +143,7 @@ def readjustRtg(off_, def_, oAvg, dAvg):
     return finalO, finalD     
 
 
-def getDaysGames():
+def getDaysGames(): #gets list of games for a given day
     daily_sched = {}
     weekday = 'Wed'
     month = 'Nov'
@@ -163,7 +163,7 @@ def getDaysGames():
     return daily_sched        
     
 
-def getPace(team_links):
+def getPace(team_links): #finds the pace of play for every team, and league average
     base_url = 'http://www.basketball-reference.com/teams/'
     end_url = '/2015.html'
     all_pace = {}
@@ -185,14 +185,14 @@ def getPace(team_links):
     return (sum_pace / 30), all_pace
 
 
-def calculateTempo(teamA, teamB, league_pace, all_pace):
+def calculateTempo(teamA, teamB, league_pace, all_pace): #predicts number of possessions for a matchup
     teamA_pace = all_pace[teamA]
     teamB_pace = all_pace[teamB]
     tempo = (teamA_pace / league_pace) * (teamB_pace / league_pace) * league_pace
     return tempo
 
 
-def predictGames(daily_sched, league_pace, all_pace, offAvg, defAvg, finalO, finalD):
+def predictGames(daily_sched, league_pace, all_pace, offAvg, defAvg, finalO, finalD): #predicts scores of games
     for key in daily_sched:
         teamA = key
         teamB = daily_sched[key]
